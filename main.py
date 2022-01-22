@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
 import itertools
 import math
+from abc import ABC, abstractmethod
 
 
 class Oscillator(ABC):
@@ -38,7 +38,7 @@ class Oscillator(ABC):
     def frequency(self):
         return self._f
 
-    @property.setter
+    @frequency.setter
     def frequency(self, value):
         self._f = value
         self._post_frequency_set()
@@ -47,7 +47,7 @@ class Oscillator(ABC):
     def amplitude(self):
         return self._a
 
-    @property.setter
+    @amplitude.setter
     def amplitude(self, value):
         self._a = value
         self._post_amplitude_set()
@@ -56,7 +56,7 @@ class Oscillator(ABC):
     def phase(self):
         return self._p
 
-    @property.setter
+    @phase.setter
     def phase(self, value):
         self._p = value
         self._post_phase_set()
@@ -95,7 +95,7 @@ class SineOscillator(Oscillator):
         self._step = (2 * math.pi * self._f) / self._sample_rate
 
     def _post_phase_set(self):
-        self._p = (self.p / 360) * 2 * math.pi
+        self._p = (self._p / 360) * 2 * math.pi
 
     def _initialize_oscillator(self):
         self._i = 0
@@ -103,7 +103,7 @@ class SineOscillator(Oscillator):
     def __next__(self):
         val = math.sin(self._i + self._p)
         self._i = self._i + self._step
-        if self._wave_range is not (-1, 1):
+        if self._wave_range != (-1, 1):
             val = self.squish_value(val, *self._wave_range)
         return val * self._a
 
@@ -146,7 +146,7 @@ class SawtoothOscillator(Oscillator):
         div = (self._i + self._p) / self._period
         val = 2 * (div - math.floor(0.5 + div))
         self._i += 1
-        if self._wave_range is not (-1, 1):
+        if self._wave_range != (-1, 1):
             val = self.squish_value(val, *self._wave_range)
         return val * self._a
 
@@ -157,7 +157,7 @@ class TriangleOscillator(SawtoothOscillator):
         val = 2 * (div - math.floor(0.5 + div))
         val = (abs(val) - 0.5) * 2
         self._i = self._i + 1
-        if self._wave_range is not (-1, 1):
+        if self._wave_range != (-1, 1):
             val = self.squish_val(val, *self._wave_range)
         return val * self._a
 
@@ -174,9 +174,10 @@ class WaveAdder:
     def __next__(self):
         return sum(next(osc) for osc in self.oscillators) / self.n
 
-from scipy.io import wavefile
-import numpy as np
+
 import librosa
+import numpy as np
+from scipy.io import wavfile
 
 SR = 44_100
 
@@ -184,7 +185,8 @@ SR = 44_100
 def get_val(osc, sample_rate=SR):
     return [next(osc) for i in range(sample_rate)]
 
-def get_seq(osc, notes=["C4", "E4", "G4"], note_lens=[0.5,0.5,0.5]):
+
+def get_seq(osc, notes=["C4", "E4", "G4"], note_lens=[0.5, 0.5, 0.5]):
     samples = []
     osc = iter(osc)
     for note, note_len in zip(notes, note_lens):
@@ -193,7 +195,10 @@ def get_seq(osc, notes=["C4", "E4", "G4"], note_lens=[0.5,0.5,0.5]):
             samples.append(next(osc))
     return samples
 
-to_16 = lambda wav, amp: np.int16(wav * amp * (2**15 - 1))
+
+to_16 = lambda wav, amp: np.int16(wav * amp * (2 ** 15 - 1))
+
+
 def wave_to_file(wav, wav2=None, fname="temp.wav", amp=0.1):
     wav = np.array(wav)
     wav = to_16(wav, amp)
@@ -201,5 +206,10 @@ def wave_to_file(wav, wav2=None, fname="temp.wav", amp=0.1):
         wav2 = np.array(wav2)
         wav2 = to_16(wav2, amp)
         wav = np.stack([wav, wav2]).T
-    
+
     wavfile.write(fname, SR, wav)
+
+
+osc = SineOscillator()
+wav = get_seq(osc)
+wave_to_file(wav, fname="c4_maj_sine.wav")
