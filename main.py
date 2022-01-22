@@ -2,6 +2,11 @@ import itertools
 import math
 from abc import ABC, abstractmethod
 
+import librosa
+import numpy as np
+from scipy.io import wavfile
+
+SR = 44_100
 
 class Oscillator(ABC):
     def __init__(
@@ -175,11 +180,6 @@ class WaveAdder:
         return sum(next(osc) for osc in self.oscillators) / self.n
 
 
-import librosa
-import numpy as np
-from scipy.io import wavfile
-
-SR = 44_100
 
 
 def get_val(osc, sample_rate=SR):
