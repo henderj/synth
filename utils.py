@@ -9,6 +9,23 @@ def get_val(osc, sample_rate=SR):
     return [next(osc) for i in range(sample_rate)]
 
 
+def getval(osc, count=SR, it=False):
+    if it:
+        osc = iter(osc)
+    # returns 1 sec of samples of given osc.
+    return [next(osc) for i in range(count)]
+
+
+def gettrig(gen, downtime, sample_rate=SR):
+    gen = iter(gen)
+    down = int(downtime * sample_rate)
+    vals = getval(gen, down)
+    gen.trigger_release()
+    while not gen.ended:
+        vals.append(next(gen))
+    return vals
+
+
 def get_seq(osc, notes=["C4", "E4", "G4"], note_lens=[0.5, 0.5, 0.5]):
     samples = []
     osc = iter(osc)
