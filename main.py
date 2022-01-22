@@ -174,7 +174,32 @@ class WaveAdder:
     def __next__(self):
         return sum(next(osc) for osc in self.oscillators) / self.n
 
+from scipy.io import wavefile
+import numpy as np
+import librosa
 
-def get_sin_oscillator(frequency, sample_rate):
-    increment = (2 * math.pi * frequency) / sample_rate
-    return (math.sin(v) for v in itertools.count(start=0, increment=increment))
+SR = 44_100
+
+
+def get_val(osc, sample_rate=SR):
+    return [next(osc) for i in range(sample_rate)]
+
+def get_seq(osc, notes=["C4", "E4", "G4"], note_lens=[0.5,0.5,0.5]):
+    samples = []
+    osc = iter(osc)
+    for note, note_len in zip(notes, note_lens):
+        osc.freq = librosa.note_to_hz(note)
+        for _ in range(int(SR * note_len)):
+            samples.append(next(osc))
+    return samples
+
+to_16 = lambda wav, amp: np.int16(wav * amp * (2**15 - 1))
+def wave_to_file(wav, wav2=None, fname="temp.wav", amp=0.1):
+    wav = np.array(wav)
+    wav = to_16(wav, amp)
+    if wav2 is not None:
+        wav2 = np.array(wav2)
+        wav2 = to_16(wav2, amp)
+        wav = np.stack([wav, wav2]).T
+    
+    wavfile.write(fname, SR, wav)
