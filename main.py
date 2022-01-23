@@ -1,16 +1,15 @@
 from librosa import note_to_hz as hz
-from pygame import MIDIIN
-
-from composers import Chain
-from modifiers import ModulatedPanner
+from pygame import midi
+import pyaudio
+import numpy as np
 from oscillators import SineOscillator, TriangleOscillator
-from utils import get_samples, gettrig, wave_to_file
+from utils import get_samples, get_sin_oscillator, gettrig, wave_to_file
 
 
 def main():
-    MIDIIN.init()
-    default_id = MIDIIN.get_default_input_id()
-    midi_input = MIDIIN.Input(device_id=default_id)
+    midi.init()
+    default_id = midi.get_default_input_id()
+    midi_input = midi.Input(device_id=default_id)
 
     stream = pyaudio.PyAudio().open(
         rate=44100,
